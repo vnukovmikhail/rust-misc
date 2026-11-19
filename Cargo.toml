@@ -1,0 +1,10 @@
+[package]
+name = "rust-misc"
+version = "0.1.0"
+edition = "2024"
+
+[workspace]
+resolver = "2"
+members = ["tests"]
+
+[dependencies]
