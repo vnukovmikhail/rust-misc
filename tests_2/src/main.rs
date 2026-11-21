@@ -1,10 +1,10 @@
+use loginfo::{LogInfo, create_user, log_info};
 use std::{
     cell::Cell,
     sync::{Arc, Mutex, RwLock, mpsc},
     thread::{self},
     time::{Duration, Instant},
 };
-
 use tokio::time::sleep;
 use tokio_stream::StreamExt;
 
@@ -72,12 +72,14 @@ macro_rules! find_max {
     (f64: $($val:expr),+) => { max_f64_impl(&[$($val),+]) };
 }
 
-#[derive(Debug)]
+#[derive(LogInfo)]
+#[log_info]
 struct User {
     username: String,
     age: u32,
 }
 
+#[derive(LogInfo)]
 struct Product {
     id: u64,
 }
@@ -279,9 +281,16 @@ async fn main() {
     let user = User {
         username: String::from("Alice"),
         age: 30,
+        struct_name: "User Profile",
     };
     let product = Product { id: 101 };
-    println!("User: {:?}\nProduct: {:?}", user, product.id);
+    user.log_identity();
+    user.log_name();
+    product.log_name();
+
+    let user = create_user!("Alice", 30);
+    user.log_name();
+    user.log_identity();
 }
 
 async fn fetch_user_profile() -> String {
