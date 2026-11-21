@@ -12,6 +12,76 @@ thread_local! {
     static MY_COUNTER: Cell<u32> = Cell::new(0);
 }
 
+macro_rules! say_hello {
+    () => {
+        println!("Hello from macro!");
+    };
+}
+
+macro_rules! greet {
+    ($person:expr) => {
+        println!("Hello, {}", $person);
+    };
+}
+
+macro_rules! greet_multi {
+    ($($person:expr),+) => {
+        $(
+        println!("Hello, {}", $person);
+        )*
+    };
+
+    () => {println!("Hello!");};
+}
+
+macro_rules! generate_max_func {
+    ($func_name:ident, $t:ty) => {
+        fn $func_name(a: $t, b: $t) -> $t {
+            if a > b { a } else { b }
+        }
+    };
+}
+
+generate_max_func!(max_i32, i32);
+generate_max_func!(max_f64, f64);
+
+macro_rules! generate_max_funcs {
+    ($(($func_name:ident, $t:ty)),*) => {
+        $(
+            fn $func_name(args: &[$t]) -> $t {
+                if args.is_empty() {
+                    panic!("Cannot find the maximum of an empty list!");
+                }
+
+                let mut current_max = args[0];
+                for &item in args.iter().skip(1) {
+                    if item > current_max {
+                        current_max = item;
+                    }
+                }
+                current_max
+            }
+        )*
+    };
+}
+
+generate_max_funcs!((max_i32_impl, i32), (max_f64_impl, f64));
+
+macro_rules! find_max {
+    (i32: $($val:expr),+) => { max_i32_impl(&[$($val),+]) };
+    (f64: $($val:expr),+) => { max_f64_impl(&[$($val),+]) };
+}
+
+#[derive(Debug)]
+struct User {
+    username: String,
+    age: u32,
+}
+
+struct Product {
+    id: u64,
+}
+
 #[tokio::main]
 async fn main() {
     let t1 = thread::spawn(|| {
@@ -195,6 +265,23 @@ async fn main() {
         "Total execution time: {:?}",
         start_time.elapsed().as_millis()
     );
+
+    say_hello!();
+    greet!("John");
+    greet_multi!("Yoru", "John", "Lit");
+    println!("Max i32: {}", max_i32(10, 20));
+    println!("Max f64: {}", max_f64(5.5, 2.3));
+    let hightest_i32 = find_max!(i32: 10, 44, 5, 23, 99, 2);
+    println!("Max i32: {}", hightest_i32);
+    let hightest_f64 = find_max!(f64: 1.1, 5.5, 3.3);
+    println!("Max f64: {}", hightest_f64);
+
+    let user = User {
+        username: String::from("Alice"),
+        age: 30,
+    };
+    let product = Product { id: 101 };
+    println!("User: {:?}\nProduct: {:?}", user, product.id);
 }
 
 async fn fetch_user_profile() -> String {

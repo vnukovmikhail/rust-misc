@@ -1,8 +1,3 @@
-[package]
-name = "rust-misc"
-version = "0.1.0"
-edition = "2024"
-
 [workspace]
+members = ["tests_0", "tests_1", "tests_2"]
 resolver = "2"
-members = ["tests", "tests_1", "tests_2"]
