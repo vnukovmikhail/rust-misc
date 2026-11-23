@@ -15,6 +15,7 @@
 // }
 
 use std::env;
+use std::net::SocketAddr;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
@@ -22,17 +23,17 @@ use tokio::sync::broadcast;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = env::var("LISTEN_ADDR").unwrap_or_else(|_| {
+    let addr = {
         let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
         format!("0.0.0.0:{port}")
-    });
+    };
     let srv = TcpListener::bind(&addr).await?;
-    let (tx, _) = broadcast::channel::<Vec<u8>>(128);
+    let (tx, _) = broadcast::channel::<(SocketAddr, Vec<u8>)>(128);
     println!("Broadcast server listening on {addr}");
 
     loop {
-        let (sock, addr) = srv.accept().await?;
-        println!("Client connected: {addr}");
+        let (sock, peer_addr) = srv.accept().await?;
+        println!("Client connected: {peer_addr}");
 
         let tx = tx.clone();
         let mut rx = tx.subscribe();
@@ -43,31 +44,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             loop {
                 let n = match reader.read(&mut buf).await {
                     Ok(0) => {
-                        println!("Client disconnected: {addr}");
+                        println!("Client disconnected: {peer_addr}");
                         break;
                     }
                     Ok(n) => n,
                     Err(e) => {
-                        eprintln!("read error: {e}");
+                        eprintln!("[{peer_addr}] read error: {e}");
                         return;
                     }
                 };
 
-                let _ = tx.send(buf[..n].to_vec());
+                let _ = tx.send((peer_addr, buf[..n].to_vec()));
             }
         });
 
         let write_task = tokio::spawn(async move {
             loop {
                 match rx.recv().await {
-                    Ok(msg) => {
+                    Ok((sender_addr, msg)) => {
+                        let prefix = format!("[{sender_addr}] ");
+                        if let Err(e) = writer.write_all(prefix.as_bytes()).await {
+                            eprintln!("[{peer_addr}] Write error: {e}");
+                            break;
+                        }
                         if let Err(e) = writer.write_all(&msg).await {
-                            eprintln!("[{addr}] Write error: {e}");
+                            eprintln!("[{peer_addr}] Write error: {e}");
                             break;
                         }
                     }
                     Err(broadcast::error::RecvError::Lagged(skipped)) => {
-                        eprintln!("[{addr}] Lagged, skipped {skipped} messages");
+                        eprintln!("[{peer_addr}] Lagged, skipped {skipped} messages");
                     }
                     Err(broadcast::error::RecvError::Closed) => break,
                 }
