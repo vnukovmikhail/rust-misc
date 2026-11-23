@@ -1,3 +1,3 @@
 [workspace]
-members = ["loginfo", "loginfo/derive", "tests_0", "tests_1", "tests_2", "tests_3"]
+members = ["loginfo", "loginfo/derive", "tests_0", "tests_1", "tests_2"]
 resolver = "2"

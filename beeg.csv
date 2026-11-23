@@ -1,0 +1,21 @@
+Id,Name,Category
+1,Goblin,Humanoid
+2,Elf,Humanoid
+3,Boar,Creature
+4,Orc,Humanoid
+5,Dwarf,Humanoid
+6,Wolf,Creature
+7,Bear,Creature
+8,Skeleton,Undead
+9,Zombie,Undead
+10,Ghost,Undead
+11,Dragon,Dragon
+12,Wyvern,Dragon
+13,Slime,Elemental
+14,Fire Elemental,Elemental
+15,Golem,Construct
+16,Gargoyle,Construct
+17,Troll,Giant
+18,Ogre,Giant
+19,Vampire,Undead
+20,Spider,Creature

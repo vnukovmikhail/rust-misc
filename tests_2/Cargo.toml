@@ -4,6 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-loginfo = { path = "../loginfo/" }
-tokio = { version = "1.54.1", features = ["full"] }
-tokio-stream = "0.1.19"
+color-eyre = "0.6.5"
+ratatui = { version = "0.30.2", features = ["all-widgets"] }

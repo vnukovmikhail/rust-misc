@@ -1,0 +1,30 @@
+name: Build async2 Linux Binary
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build async2 binary for Linux
+        run: cargo build --release -p tests_1 --bin async2
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: async2-linux-x86_64
+          path: target/release/async2
+          if-no-files-found: error
