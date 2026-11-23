@@ -1,17 +1,18 @@
-name: Release async2 Linux Binary
+name: async2
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
-permissions:
-  contents: write
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}-async2
 
 jobs:
-  build-and-release:
+  build-and-publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout repository
@@ -26,7 +27,18 @@ jobs:
       - name: Build async2 binary for Linux
         run: cargo build --release -p tests_1 --bin async2
 
-      - name: Publish binary to GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          files: target/release/async2
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push container image
+        run: |
+          docker build -t "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" -f - . <<'EOF'
+          FROM debian:bookworm-slim
+          COPY target/release/async2 /usr/local/bin/async2
+          ENTRYPOINT ["async2"]
+          EOF
+          docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
