@@ -14,16 +14,21 @@
 //     }
 // }
 
+use std::env;
+
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio::sync::broadcast;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let host = "localhost:8080";
-    let srv = TcpListener::bind(host).await?;
+    let addr = env::var("LISTEN_ADDR").unwrap_or_else(|_| {
+        let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+        format!("0.0.0.0:{port}")
+    });
+    let srv = TcpListener::bind(&addr).await?;
     let (tx, _) = broadcast::channel::<Vec<u8>>(128);
-    println!("Broadcast server listening on {host}");
+    println!("Broadcast server listening on {addr}");
 
     loop {
         let (sock, addr) = srv.accept().await?;
